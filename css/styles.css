@@ -29,6 +29,7 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition: padding-bottom 0.3s ease;
 }
 
 .text-container {
@@ -65,6 +66,11 @@ main {
     outline: none;
     color: #333;
     background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 0;
+    font-size: 16px;
+    /* iOSでズームを防ぐため */
 }
 
 .text-input::placeholder {
@@ -116,6 +122,14 @@ footer {
     position: fixed;
     bottom: 0;
     width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    z-index: 1000;
+    padding: 10px;
+    transition: transform 0.3s ease;
 }
 
 footer button {
@@ -134,6 +148,10 @@ footer button:hover {
     color: #d94a2e;
 }
 
+body.keyboard-visible footer {
+    transform: translateY(100%);
+}
+
 .fullscreen-container {
     position: fixed;
     top: 0;
@@ -145,6 +163,11 @@ footer button:hover {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
 }
 
 .fullscreen-text {
@@ -158,6 +181,7 @@ footer button:hover {
     display: flex;
     justify-content: center;
     align-items: center;
+    pointer-events: none;
 }
 
 .hidden {

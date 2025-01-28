@@ -9,14 +9,48 @@ class FullscreenManager {
     }
 
     setupEventListeners() {
-        this.fullscreenView.addEventListener('click', (e) => {
-            const halfWidth = window.innerWidth / 2;
-            if (e.clientX > halfWidth) {
-                this.showNext();
+        // タッチイベントの設定
+        this.fullscreenView.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            this.touchStartX = touch.clientX;
+        }, { passive: false });
+
+        this.fullscreenView.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            const touchEndX = touch.clientX;
+            
+            // スワイプの方向を判定
+            const swipeDistance = touchEndX - this.touchStartX;
+            if (Math.abs(swipeDistance) < 50) {
+                // タップとして処理
+                this.handleScreenTap(touchEndX);
             } else {
-                this.showPrevious();
+                // スワイプとして処理
+                if (swipeDistance > 0) {
+                    this.showPrevious();
+                } else {
+                    this.showNext();
+                }
             }
-        });
+        }, { passive: false });
+
+        // デスクトップ用のクリックイベント
+        if (!this.isIOS()) {
+            this.fullscreenView.addEventListener('click', (e) => {
+                this.handleScreenTap(e.clientX);
+            });
+        }
+    }
+
+    handleScreenTap(x) {
+        const halfWidth = window.innerWidth / 2;
+        if (x > halfWidth) {
+            this.showNext();
+        } else {
+            this.showPrevious();
+        }
     }
 
     start() {
@@ -30,17 +64,25 @@ class FullscreenManager {
         this.fullscreenView.classList.remove('hidden');
         this.showCurrent();
 
-        // スマートフォンの場合、画面を横向きにする
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape')
-                .catch(err => console.log('画面の向きを固定できませんでした:', err));
+        // iOSの場合はフルスクリーンAPIを使用しない
+        if (!this.isIOS()) {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen()
+                    .catch(err => console.log('フルスクリーンモードを開始できませんでした:', err));
+            }
         }
+    }
 
-        // フルスクリーンモードを開始
-        if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen()
-                .catch(err => console.log('フルスクリーンモードを開始できませんでした:', err));
-        }
+    isIOS() {
+        return [
+            'iPad Simulator',
+            'iPhone Simulator',
+            'iPod Simulator',
+            'iPad',
+            'iPhone',
+            'iPod'
+        ].includes(navigator.platform)
+        || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
     }
 
     showCurrent() {
