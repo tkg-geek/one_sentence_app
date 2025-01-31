@@ -3,15 +3,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     try {
         // Capacitorの初期化
-        let App, Haptics;
+        let App, Haptics, FullscreenPlugin;
         try {
             const cap = await import('@capacitor/app');
             const hap = await import('@capacitor/haptics');
+            const { registerPlugin } = await import('@capacitor/core');
+            
             App = cap.App;
             Haptics = hap.Haptics;
+            
+            // FullscreenPluginの初期化
+            FullscreenPlugin = registerPlugin('FullscreenPlugin', {
+                web: {
+                    show: () => Promise.reject('Web implementation not available'),
+                    hide: () => Promise.reject('Web implementation not available')
+                }
+            });
+            console.log('FullscreenPlugin initialized:', FullscreenPlugin);
+            
             console.log('Capacitor modules imported successfully');
         } catch (e) {
-            console.log('Capacitor import error:', e);
+            console.error('Capacitor import error:', e);
         }
 
         class TextEditor {
@@ -290,9 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             startFullscreen() {
                 console.log('Starting fullscreen mode');
-                const fullscreenView = document.getElementById('fullscreenView');
-                const fullscreenText = fullscreenView.querySelector('.fullscreen-text');
-
+                
                 // テキストの取得と準備
                 const texts = Array.from(this.textAreas.querySelectorAll('.text-input'))
                     .map(input => input.value)
@@ -303,92 +313,62 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
+                // iOSデバイスの場合はネイティブプラグインを使用
+                if (this.isIOS()) {
+                    console.log('Using native fullscreen plugin for iOS');
+                    try {
+                        if (!FullscreenPlugin) {
+                            console.error('FullscreenPlugin is not available');
+                            throw new Error('FullscreenPlugin is not initialized');
+                        }
+
+                        console.log('Calling FullscreenPlugin.show with texts:', texts);
+                        FullscreenPlugin.show({
+                            texts: texts,
+                            currentIndex: 0
+                        }).then(() => {
+                            console.log('Fullscreen show successful');
+                        }).catch(error => {
+                            console.error('Fullscreen show error:', error);
+                            // フォールバック: Webブラウザ用の実装を使用
+                            this.showWebFullscreen(texts);
+                        });
+
+                    } catch (error) {
+                        console.error('Fullscreen plugin error:', error);
+                        // フォールバック: Webブラウザ用の実装を使用
+                        this.showWebFullscreen(texts);
+                    }
+                    return;
+                }
+
+                // Webブラウザ用のフルスクリーン表示
+                this.showWebFullscreen(texts);
+            }
+
+            // Webブラウザ用のフルスクリーン表示を別メソッドに分離
+            showWebFullscreen(texts) {
+                const fullscreenView = document.getElementById('fullscreenView');
+                const fullscreenText = fullscreenView.querySelector('.fullscreen-text');
                 let currentIndex = 0;
 
-                const showCurrent = () => {
-                    console.log('Showing text at index:', currentIndex);
+                const showText = () => {
                     fullscreenText.textContent = texts[currentIndex];
-                    if (Haptics) {
-                        Haptics.impact({ style: 'light' });
-                    }
                 };
 
-                const exitFullscreen = () => {
-                    console.log('Exiting fullscreen mode');
-                    if (Haptics) {
-                        Haptics.notification({ type: 'success' });
-                    }
-                    // すべてのイベントリスナーを削除
-                    fullscreenView.removeEventListener('click', handleTap);
-                    document.removeEventListener('touchstart', preventScroll, { passive: false });
-                    fullscreenView.classList.add('hidden');
-                };
-
-                const handleNavigation = async (isForward) => {
-                    console.log('Navigation:', isForward ? 'forward' : 'backward');
-                    if (isForward) {
-                        if (currentIndex < texts.length - 1) {
-                            if (Haptics) {
-                                await Haptics.impact({ style: 'medium' });
-                            }
-                            currentIndex++;
-                            showCurrent();
-                        } else {
-                            exitFullscreen();
-                        }
+                const handleClick = (e) => {
+                    if (currentIndex < texts.length - 1) {
+                        currentIndex++;
+                        showText();
                     } else {
-                        if (currentIndex > 0) {
-                            if (Haptics) {
-                                await Haptics.impact({ style: 'medium' });
-                            }
-                            currentIndex--;
-                            showCurrent();
-                        } else {
-                            exitFullscreen();
-                        }
+                        fullscreenView.removeEventListener('click', handleClick);
+                        fullscreenView.classList.add('hidden');
                     }
                 };
 
-                // シンプルなタップハンドラー
-                const handleTap = async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const tapX = e.type === 'click' ? e.clientX : e.touches[0].clientX;
-                    const halfWidth = window.innerWidth / 2;
-                    const isRightSide = tapX > halfWidth;
-                    
-                    console.log('Tap detected on:', isRightSide ? 'right side' : 'left side');
-                    
-                    if (Haptics) {
-                        await Haptics.impact({ style: 'light' });
-                    }
-                    
-                    handleNavigation(isRightSide);
-                };
-
-                // スクロールを防止
-                const preventScroll = (e) => {
-                    e.preventDefault();
-                };
-
-                // イベントリスナーの設定
-                console.log('Setting up tap events');
-                fullscreenView.addEventListener('click', handleTap);
-                
-                // iOSでのスクロールを防止
-                document.addEventListener('touchstart', preventScroll, { passive: false });
-
-                // スタイルの設定
-                fullscreenView.style.webkitTapHighlightColor = 'transparent';
-                fullscreenView.style.webkitTouchCallout = 'none';
-                fullscreenView.style.webkitUserSelect = 'none';
-                fullscreenView.style.userSelect = 'none';
-
-                // フルスクリーンの開始
-                console.log('Showing fullscreen view');
+                fullscreenView.addEventListener('click', handleClick);
                 fullscreenView.classList.remove('hidden');
-                showCurrent();
+                showText();
             }
         }
 

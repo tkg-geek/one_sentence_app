@@ -1,5 +1,12 @@
 {
   "appId": "jp.ne.sakura.tkgeek.one_sentence",
   "appName": "one sentence",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "FullscreenPlugin": {
+      "ios": {
+        "src": "ios/App/App/plugins/FullscreenPlugin/FullscreenPlugin.swift"
+      }
+    }
+  }
 }
