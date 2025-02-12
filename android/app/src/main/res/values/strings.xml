@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">one sentence</string>
     <string name="title_activity_main">one sentence</string>
-    <string name="package_name">jp.ne.sakura.tkgeek.one_sentence</string>
-    <string name="custom_url_scheme">jp.ne.sakura.tkgeek.one_sentence</string>
+    <string name="package_name">jp.ne.tkgeek.one_sentence</string>
+    <string name="custom_url_scheme">jp.ne.tkgeek.one_sentence</string>
 </resources>

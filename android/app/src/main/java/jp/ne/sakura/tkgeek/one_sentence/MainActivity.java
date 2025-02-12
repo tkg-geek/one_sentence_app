@@ -1,4 +1,4 @@
-package jp.ne.sakura.tkgeek.one_sentence;
+package jp.ne.tkgeek.one_sentence;
 
 import com.getcapacitor.BridgeActivity;
 

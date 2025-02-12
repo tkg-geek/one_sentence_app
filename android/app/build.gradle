@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "jp.ne.sakura.tkgeek.one_sentence"
+    namespace "jp.ne.tkgeek.one_sentence"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "jp.ne.sakura.tkgeek.one_sentence"
+        applicationId "jp.ne.tkgeek.one_sentence"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
